@@ -8,10 +8,11 @@ import (
 	"io/ioutil"
 	"os"
 )
+var log os.File
 
-var pins[]bbhw.FakeGPIO
+var pins[]bbhw.GPIOControllablePin
 //var readings[]float64
-var activation bbhw.FakeGPIO
+var activation bbhw.GPIOControllablePin
 var control bbhw.PWMPin
 var activePos, lastPos float64
 var recordingComplete bool
@@ -31,16 +32,19 @@ func main () {
 	defer input.Close()			//Close accelerometer SPI comms after program is over
 
 	pins := make([]bbhw.FakeGPIO, 15) //6 readings from passive materials, 1 reading from active, 1 for powering active
-	pins[0], pins[1] = null                     //Passive #1 - Control
-	pins[2], pins[3] = null                     //Passive #2 - MaPS
-	pins[4], pins[5] = null                     //Passive #3 - Cable Mount
-	pins[6], pins[7] = null                     //Passive #4 - Neoprene
-	pins[8], pins[9] = null                     //Passive #5 - Sorbothane (POSSIBLY REMOVING)
+	pins[0], pins[1] = nil, nil                //Passive #1 - Control
+	pins[2], pins[3] = nil                     //Passive #2 - MaPS
+	pins[4], pins[5] = nil                     //Passive #3 - Cable Mount
+	pins[6], pins[7] = nil                     //Passive #4 - Neoprene
+	pins[8], pins[9] = nil                     //Passive #5 - Sorbothane (POSSIBLY REMOVING)
 	pins[10], pins[11] = null                   //Passive #6 - Elastomeric Resin
 	pins[12], pins[13] = null                   //Active Read
 	pins[14], pins[15] = null                   //Active Control
 
 	activePos = 0	//Initialize readings to 0
+
+	log, err := os.Create("CompiledAccelerometerData.txt")
+	if err != nil{panic(err)}
 
 	countdown := time.NewTimer(30)	//Starting countdown (can be interrupted by activation line)
 	go func() {					//Function called when countdown finishes
@@ -73,8 +77,7 @@ func recordReact(){
 		2. New accelerometer feeds data to SPI
 	  	3. Record incoming data to file (maybe do several files, maybe do single file that will then require splitting into six parts
 	  	4. Use data from active system's accelerometer to drive voice coil*/
-	log, err := os.Create("CompiledAccelerometerData.txt")
-	if err != nil {panic(err)}
+
 	var reading[] byte					//Input byte array
 	for !recordingComplete{
 		for _, pin := range pins{
@@ -82,8 +85,7 @@ func recordReact(){
 			input.Tx(nil, reading)	//Attempt SPI transaction, place results into reading
 			pin.SetState(false)
 
-
-
+			log.Write(reading)
 			//driveVoiceCoil()
 		}
 	}
