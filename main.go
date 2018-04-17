@@ -2,16 +2,19 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/btittelbach/go-bbhw"
 	"golang.org/x/exp/io/spi"
 )
 
+var log os.File
+
 var pins []bbhw.FakeGPIO
 
 //var readings[]float64
-var activation bbhw.FakeGPIO
+var activation bbhw.GPIOControllablePin
 var control bbhw.PWMPin
 var activePos, lastPos float64
 var recordingComplete bool
